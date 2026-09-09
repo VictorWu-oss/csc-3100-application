@@ -59,6 +59,23 @@ app.get("/users", (req, res) => {
   }
 });
 
+// Finds user by id. Endpoint accepts http GET requests, pass users to req and the response is 
+// :id is a variable, assign id to a passed variable, loop through the array to find its user AND check if user id matches :id
+// response is either an error or returned user matching the id
+// EX: http://localhost:8000/users/zap555
+const findUserById = (id) =>
+  users["users_list"].find((user) => user["id"] === id);
+
+app.get("/users/:id", (req, res) => {
+  const id = req.params["id"]; //or req.params.id
+  let result = findUserById(id);
+  if (result === undefined) {
+    res.status(404).send("Resource not found.");
+  } else {
+    res.send(result);
+  }
+});
+
 
 app.listen(port, () => {
   console.log(`Example app listening at http://localhost:${port}`);

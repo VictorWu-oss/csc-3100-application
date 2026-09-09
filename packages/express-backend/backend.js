@@ -7,6 +7,10 @@ const port = 8000;
 
 app.use(express.json());
 
+app.listen(port, () => {
+  console.log(`Example app listening at http://localhost:${port}`);
+});
+
 const users = {
   users_list: [
     {
@@ -37,8 +41,10 @@ const users = {
   ],
 };
 
+// GET /users/:name
 // Filters the list, when we go to the port: http://localhost:8000/users?name=Mac
 // The ?name=Mac is our argument passed to the .get req. The response is the returned result.
+// .filter returns a whole new array containing the matching elements
 const findUserByName = (name) => {
   return users["users_list"].filter((user) => user["name"] === name);
 };
@@ -59,9 +65,10 @@ app.get("/users", (req, res) => {
   }
 });
 
+// GET /users/:id
 // Finds user by id. Endpoint accepts http GET requests, pass users to req and the response is 
 // :id is a variable, assign id to a passed variable, loop through the array to find its user AND check if user id matches :id
-// response is either an error or returned user matching the id
+// response is either an error or returned user matching the id, .find returns first matching element
 // EX: http://localhost:8000/users/zap555
 const findUserById = (id) =>
   users["users_list"].find((user) => user["id"] === id);
@@ -77,6 +84,22 @@ app.get("/users/:id", (req, res) => {
 });
 
 
-app.listen(port, () => {
-  console.log(`Example app listening at http://localhost:${port}`);
+// POST /users/addUser
+/*
+{
+  "id": "qwe123",
+  "job": "Zookeeper",
+  "name": "Cindy"
+}
+*/ 
+const addUser = (user) => {
+  users["users_list"].push(user);
+  return user;
+};
+
+app.post("/users", (req, res) => {
+  const userToAdd = req.body;
+  addUser(userToAdd);
+  res.send();
 });
+

@@ -85,6 +85,7 @@ app.get("/users/:id", (req, res) => {
 
 
 // POST /users/addUser
+// req.body ais key valUE PAIRS OF DATA SUBMITTED in REQUEST BODY 
 /*
 {
   "id": "qwe123",
@@ -103,3 +104,60 @@ app.post("/users", (req, res) => {
   res.send();
 });
 
+// DELETE /users/deleteUser
+// Add first the user then try to delete it
+/*
+{
+  "id": "qwe123",
+  "job": "Zookeeper",
+  "name": "Cindy"
+}
+*/ 
+const deleteUser = (user) => {
+  const list = users["users_list"];
+
+  // Find the position (index) of the user with the matching ID
+  const index = list.findIndex(u => u.id === user);
+
+  // Do this to prevent empty gaps
+  if (index !== -1) {
+    // Cut 1 item out of the array at that specific index
+    const deletedUser = list.splice(index, 1)[0];
+    return deletedUser; 
+  }
+
+  return null; // return null if not found
+};
+
+app.delete("/users", (req, res) => {
+  const userToDelete = req.body;
+
+  if (!userToDelete || !userToDelete.id) {
+    return res.status(400).send({error: "Missing user ID in request body"});
+  }
+
+  const removedUser = deleteUser(userToDelete.id);
+
+  if (!removedUser){
+    return res.status(404).send({error: "user not found"});
+  }
+
+  res.send(removedUser);
+});
+
+// GET users that match a given name and a job
+const findUserByNameAndJob = (name, job) => {
+  return users["users_list"].filter((user) => user["name"] === name && user["job"] === job) ;
+};
+
+app.get("/users", (req, res) => {
+  const name = req.query.name;
+  const job = req.query.job
+  if (name != undefined && job != undefined) {
+    let result = findUserByNameAndJob(name, job);
+    result = { users_list: result };
+    res.send(result);
+  } else {
+    res.send(users);
+  }
+});

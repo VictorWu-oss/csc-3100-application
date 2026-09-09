@@ -69,7 +69,7 @@ app.get("/users", (req, res) => {
 // Finds user by id. Endpoint accepts http GET requests, pass users to req and the response is 
 // :id is a variable, assign id to a passed variable, loop through the array to find its user AND check if user id matches :id
 // response is either an error or returned user matching the id, .find returns first matching element
-// EX: http://localhost:8000/users/zap555
+// Test Link: http://localhost:8000/users/zap555
 const findUserById = (id) =>
   users["users_list"].find((user) => user["id"] === id);
 
@@ -86,6 +86,7 @@ app.get("/users/:id", (req, res) => {
 
 // POST /users/addUser
 // req.body ais key valUE PAIRS OF DATA SUBMITTED in REQUEST BODY 
+// use the below json body in boomerang in a POST 
 /*
 {
   "id": "qwe123",
@@ -105,12 +106,10 @@ app.post("/users", (req, res) => {
 });
 
 // DELETE /users/deleteUser
-// Add first the user then try to delete it
+// Add first the user then try to delete it by passing the id
 /*
 {
   "id": "qwe123",
-  "job": "Zookeeper",
-  "name": "Cindy"
 }
 */ 
 const deleteUser = (user) => {
@@ -146,6 +145,7 @@ app.delete("/users", (req, res) => {
 });
 
 // GET users that match a given name and a job
+// Test Link: http://localhost:8000/users?name=Cindy&job=Zookeeper
 const findUserByNameAndJob = (name, job) => {
   return users["users_list"].filter((user) => user["name"] === name && user["job"] === job) ;
 };

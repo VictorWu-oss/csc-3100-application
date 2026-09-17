@@ -1,14 +1,21 @@
 // backend.js
 import express from "express";
+import cors from "cors";
 
 // instance of express and define constant for listening port
 const app = express();
 const port = 8000;
 
+// CORS allows backend to respond to calls coming from anywhere
+app.use(cors());
 app.use(express.json());
 
 app.listen(port, () => {
   console.log(`Example app listening at http://localhost:${port}`);
+});
+
+app.get("/", (req, res) => {
+  res.send("Hello World!");
 });
 
 const users = {
@@ -95,15 +102,24 @@ app.get("/users/:id", (req, res) => {
 }
 */ 
 const addUser = (user) => {
-  users["users_list"].push(user);
-  return user;
+  const randNum = Math.random();
+  const base36String = randNum.toString(36).slice(2);
+  const userToPush = {
+    id: base36String, 
+    name: user.name, 
+    job: user.job,
+  };
+  users["users_list"].push(userToPush);
+  return userToPush;
 };
 
 app.post("/users", (req, res) => {
   const userToAdd = req.body;
-  addUser(userToAdd);
-  res.send();
+  const addedUser = addUser(userToAdd);
+  res.status(201).send(addedUser);
 });
+
+
 
 // DELETE /users/deleteUser
 // Add first the user then try to delete it by passing the id
@@ -128,20 +144,21 @@ const deleteUser = (user) => {
   return null; // return null if not found
 };
 
-app.delete("/users", (req, res) => {
-  const userToDelete = req.body;
+app.delete("/users/:id", (req, res) => {
+  //const userToDelete = req.body;
 
-  if (!userToDelete || !userToDelete.id) {
-    return res.status(400).send({error: "Missing user ID in request body"});
-  }
+  //if (!userToDelete || !userToDelete.id) {
+  //  return res.status(400).send({error: "Missing user ID in request body"});
+  //}
 
-  const removedUser = deleteUser(userToDelete.id);
+  // Get the id parameter, before deleting from frontend check for success on backend
+  const removedUser = deleteUser(req.params.id);
 
   if (!removedUser){
     return res.status(404).send({error: "user not found"});
   }
 
-  res.send(removedUser);
+  res.status(204).send();
 });
 
 // GET users that match a given name and a job
@@ -161,3 +178,6 @@ app.get("/users", (req, res) => {
     res.send(users);
   }
 });
+
+// start of IE3: Linking Frontend to Backend
+

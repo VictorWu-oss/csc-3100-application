@@ -1,32 +1,71 @@
 // src/MyApp.jsx
-import React from "react";
+import React, { useState, useEffect } from "react";
 import Table from "./Table";
-import {useState} from "react";
 import Form from "./Form";
 
 function MyApp() {
-
-  // characters is the current state value
-  // setCharacters is the function that lets you update it
-  // useState call returns the aforementioned pairs
-  // remove hard-coded characters list and now appending to an empty list
   const [characters, setCharacters] = useState([]);
 
-  function removeOneCharacter(index){
-    const updated = characters.filter((character, i) => {
-      return i !== index;
-    });
-    setCharacters(updated);
+  useEffect(() => {
+    fetch("http://localhost:8000/users")
+      .then((res) => res.json())
+      .then((json) => setCharacters(json["users_list"] ?? []))
+      .catch((error) => {
+        console.log(error);
+      });
+  }, []);
+
+  // Function receives the row index, so get the complete char and its ID
+  function removeOneCharacter(index) {
+    const character = characters[index];
+
+    fetch(`http://localhost:8000/users/${character.id}`, {
+      method: "DELETE",
+    })
+      .then((response) => {
+        if (response.status === 204) {
+          const updated = characters.filter((_, i) => i !== index);
+          setCharacters(updated);
+        }
+      })
+      .catch((error) => {
+        console.log(error);
+      });
   }
 
-  function updateList(person){
-    setCharacters([...characters, person]);
+  // Change updateList, only update if POST call is successful (If promise returned by postUser throw any error)
+  function updateList(person) {
+    postUser(person)
+      .then((response) => {
+        if (response.status !== 201) {
+          return;
+        }
+
+        return response.json();
+      })
+      .then((newUser) => {
+        if (newUser) {
+          setCharacters([...characters, newUser]);
+        }
+      });
+  }
+
+  function postUser(person) {
+    const promise = fetch("http://localhost:8000/users", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(person),
+    });
+
+    return promise;
   }
 
   return (
     <div className="container">
-      <Table characterData={characters} removeCharacter={removeOneCharacter}/>
-      <Form handleSubmit={updateList}  />
+      <Table characterData={characters} removeCharacter={removeOneCharacter} />
+      <Form handleSubmit={updateList} />
     </div>
   );
 }

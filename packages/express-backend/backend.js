@@ -1,14 +1,21 @@
 // backend.js
 import express from "express";
+import cors from "cors";
 
 // instance of express and define constant for listening port
 const app = express();
 const port = 8000;
 
+// CORS allows backend to respond to calls coming from anywhere
+app.use(cors());
 app.use(express.json());
 
 app.listen(port, () => {
   console.log(`Example app listening at http://localhost:${port}`);
+});
+
+app.get("/", (req, res) => {
+  res.send("Hello World!");
 });
 
 const users = {
@@ -161,3 +168,6 @@ app.get("/users", (req, res) => {
     res.send(users);
   }
 });
+
+// start of IE3: Linking Frontend to Backend
+

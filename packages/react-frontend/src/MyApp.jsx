@@ -15,13 +15,51 @@ function MyApp() {
       });
   }, []);
 
+  // Function receives the row index, so get the complete char and its ID
   function removeOneCharacter(index) {
-    const updated = characters.filter((character, i) => i !== index);
-    setCharacters(updated);
+    const character = characters[index];
+
+    fetch(`http://localhost:8000/users/${character.id}`, {
+      method: "DELETE",
+    })
+      .then((response) => {
+        if (response.status === 204) {
+          const updated = characters.filter((_, i) => i !== index);
+          setCharacters(updated);
+        }
+      })
+      .catch((error) => {
+        console.log(error);
+      });
   }
 
+  // Change updateList, only update if POST call is successful (If promise returned by postUser throw any error)
   function updateList(person) {
-    setCharacters([...characters, person]);
+    postUser(person)
+      .then((response) => {
+        if (response.status !== 201) {
+          return;
+        }
+
+        return response.json();
+      })
+      .then((newUser) => {
+        if (newUser) {
+          setCharacters([...characters, newUser]);
+        }
+      });
+  }
+
+  function postUser(person) {
+    const promise = fetch("http://localhost:8000/users", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(person),
+    });
+
+    return promise;
   }
 
   return (

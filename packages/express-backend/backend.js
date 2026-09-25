@@ -1,6 +1,18 @@
 // backend.js
 import express from "express";
 import cors from "cors";
+import dotenv from "dotenv";
+import mongoose from "mongoose";
+import userService from "./services/user-service.js";
+
+dotenv.config();
+
+const { MONGO_CONNECTION_STRING } = process.env;
+
+mongoose.set("debug", true);
+mongoose
+  .connect(MONGO_CONNECTION_STRING + "users")
+  .catch((error) => console.log(error));
 
 // instance of express and define constant for listening port
 const app = express();
@@ -14,6 +26,7 @@ app.listen(port, () => {
   console.log(`Example app listening at http://localhost:${port}`);
 });
 
+/*
 app.get("/", (req, res) => {
   res.send("Hello World!");
 });
@@ -47,20 +60,36 @@ const users = {
     },
   ],
 };
+*/
 
 // GET /users/:name
 // Filters the list, when we go to the port: http://localhost:8000/users?name=Mac
 // The ?name=Mac is our argument passed to the .get req. The response is the returned result.
 // .filter returns a whole new array containing the matching elements
+/*
 const findUserByName = (name) => {
-  return users["users_list"].filter((user) => user["name"] === name);
+  return findUserByName(name)
+  //users["users_list"].filter((user) => user["name"] === name);
 };
+*/
 
 // First API endpoint, endpoint accepts http GET requests
 // req is requesting the data, res is the response
 // In the function we use those objects to process the request 
 // and send a response to the client that called the REST API
-app.get("/users", (req, res) => {
+app.get("/users", async (req, res, next) => {
+  try {
+    const users = await userService.getUsers(
+      req.query.name,
+      req.query.job
+    );
+
+    res.json({ users_list: users});
+  } catch (error) {
+    next(error);
+  }
+  /*
+  Old Code
   const name = req.query.name;
   if (name != undefined) {
     let result = findUserByName(name);
@@ -70,6 +99,7 @@ app.get("/users", (req, res) => {
   else {
     res.send(users);
   }
+    */
 });
 
 // GET /users/:id
@@ -77,10 +107,25 @@ app.get("/users", (req, res) => {
 // :id is a variable, assign id to a passed variable, loop through the array to find its user AND check if user id matches :id
 // response is either an error or returned user matching the id, .find returns first matching element
 // Test Link: http://localhost:8000/users/zap555
+/*
 const findUserById = (id) =>
   users["users_list"].find((user) => user["id"] === id);
+*/
 
-app.get("/users/:id", (req, res) => {
+app.get("/users/:id", async (req, res, next) => {
+  try {
+    const user = await userService.findUserById(req.params.id);
+
+    if (!user) {
+      return res.status(404).send("Resource not found.");
+    }
+
+    res.json(user);
+  } catch (error) {
+    next(error);
+  }
+ 
+  /*
   const id = req.params["id"]; //or req.params.id
   let result = findUserById(id);
   if (result === undefined) {
@@ -88,6 +133,8 @@ app.get("/users/:id", (req, res) => {
   } else {
     res.send(result);
   }
+  return res.send(findUserById)
+    */
 });
 
 
@@ -101,6 +148,7 @@ app.get("/users/:id", (req, res) => {
   "name": "Cindy"
 }
 */ 
+/*
 const addUser = (user) => {
   const randNum = Math.random();
   const base36String = randNum.toString(36).slice(2);
@@ -112,11 +160,22 @@ const addUser = (user) => {
   users["users_list"].push(userToPush);
   return userToPush;
 };
+*/
 
-app.post("/users", (req, res) => {
+
+app.post("/users", async (req, res, next) => {
+  try {
+    const user = await userService.addUser(req.body);
+    res.status(201).json(user);
+  } catch (error) {
+    next(error);
+  }
+  /*
+  Old Code
   const userToAdd = req.body;
   const addedUser = addUser(userToAdd);
   res.status(201).send(addedUser);
+  */
 });
 
 
@@ -128,6 +187,7 @@ app.post("/users", (req, res) => {
   "id": "qwe123",
 }
 */ 
+/*
 const deleteUser = (user) => {
   const list = users["users_list"];
 
@@ -143,8 +203,21 @@ const deleteUser = (user) => {
 
   return null; // return null if not found
 };
+*/
 
-app.delete("/users/:id", (req, res) => {
+app.delete("/users/:id", async (req, res, next) => {
+  try {
+    const deletedUser = await userService.removeUser(req.params.id);
+
+    if (!deletedUser) {
+      return res.status(400).send({error: "Invalid User Id"});
+    }
+
+    res.status(204).send();
+  } catch (error) {
+    next(error);
+  }
+});
   //const userToDelete = req.body;
 
   //if (!userToDelete || !userToDelete.id) {
@@ -152,6 +225,8 @@ app.delete("/users/:id", (req, res) => {
   //}
 
   // Get the id parameter, before deleting from frontend check for success on backend
+  /*
+  Old Code
   const removedUser = deleteUser(req.params.id);
 
   if (!removedUser){
@@ -159,14 +234,18 @@ app.delete("/users/:id", (req, res) => {
   }
 
   res.status(204).send();
-});
+  */
 
 // GET users that match a given name and a job
 // Test Link: http://localhost:8000/users?name=Cindy&job=Zookeeper
+/*
 const findUserByNameAndJob = (name, job) => {
   return users["users_list"].filter((user) => user["name"] === name && user["job"] === job) ;
 };
+*/
 
+/*
+Old Code
 app.get("/users", (req, res) => {
   const name = req.query.name;
   const job = req.query.job
@@ -177,6 +256,16 @@ app.get("/users", (req, res) => {
   } else {
     res.send(users);
   }
+});
+*/
+app.use((error, req, res, next) => {
+  console.error(error);
+
+  if (error.name === "ValidationError") {
+    return res.status(400).json({ error: error.message });
+  }
+
+  res.status(500).json({ error: "Internal server error" });
 });
 
 // start of IE3: Linking Frontend to Backend
